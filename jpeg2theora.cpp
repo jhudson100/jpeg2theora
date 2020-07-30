@@ -6,6 +6,8 @@
 // Example:
 //  jpeg2theora 25 movie.ogv pic%04d.jpg
 
+//  g++ -g jpeg2theora.cpp -o jpeg2theora -logg  -ltheora -ltheoraenc -ltheoradec -lturbojpeg
+
 //~ Copyright (c) 2020 J Hudson
 
 //~ Permission is hereby granted, free of charge, to any person obtaining a copy
