@@ -67,9 +67,6 @@ int main(int argc, char* argv[])
     //strides in Y, Cb, and Cr
     int strides[3];
 
-    //width and height of Cb/Cr channels
-    int cbw,cbh;
-
     //filename buffer: Output of sprintf
     std::vector<char> pstr(pattern.length()+32);
     
@@ -137,10 +134,6 @@ int main(int argc, char* argv[])
             subs=subs1;
             cspace=cspace1;
             
-            if( cspace != TJCS_RGB && cspace != TJCS_YCbCr ){
-                throw std::runtime_error("Cannot work with this color space: "+std::to_string(cspace));
-            }
-            
             int framewidth = (w+15)&~0xf;
             int frameheight = (h+15)&~0xf;
             th_pixel_fmt thpixf;
@@ -156,29 +149,31 @@ int main(int argc, char* argv[])
                     thpixf=TH_PF_420;
                     break;
                 default:
-                    assert(0);
+                    throw std::runtime_error("Unsupported subsampling: "+std::to_string(subs));
             }
-            cbw = tjPlaneWidth(1,w,subs);
-            cbh = tjPlaneHeight(1,h,subs);
+            int cbframew = tjPlaneWidth(1,framewidth,subs);
+            int cbframeh = tjPlaneHeight(1,frameheight,subs);
+            int cbpicw = tjPlaneWidth(1,w,subs);
+            int cbpich = tjPlaneHeight(1,h,subs);
             
-            Y.resize(tjPlaneSizeYUV(0,w,framewidth,h,subs));
-            Cb.resize(tjPlaneSizeYUV(1,w,framewidth,h,subs));
-            Cr.resize(tjPlaneSizeYUV(2,w,framewidth,h,subs));
+            Y.resize(tjPlaneSizeYUV(0,framewidth,framewidth,frameheight,subs));
+            Cb.resize(tjPlaneSizeYUV(1,framewidth,framewidth,frameheight,subs));
+            Cr.resize(tjPlaneSizeYUV(2,framewidth,framewidth,frameheight,subs));
             dplanes[0] = (unsigned char*)Y.data();
             dplanes[1] = (unsigned char*)Cb.data();
             dplanes[2] = (unsigned char*)Cr.data();
-            strides[0] = w;
-            strides[1] = cbw;
-            strides[2] = cbw;
+            strides[0] = framewidth;
+            strides[1] = cbframew;
+            strides[2] = cbframew;
                     
             buff[0].width = framewidth;
             buff[0].height = frameheight;
             buff[0].stride = framewidth;
             buff[0].data = Y.data();
             
-            buff[1].width = (cbw+15)&~0xf;
-            buff[1].height = (cbh+15)&~0xf;
-            buff[1].stride = cbw;
+            buff[1].width = cbframew;
+            buff[1].height = cbframeh;
+            buff[1].stride = cbframew;
             buff[1].data = Cb.data();
             
             buff[2].width = buff[1].width;
